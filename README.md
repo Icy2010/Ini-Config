@@ -1,4 +1,4 @@
-![image](https://github.com/Icy2010/)
+![image](https://github.com/Icy2010/Ini-Config/blob/main/ini-config.png)
 # Ini-Config
 #### 粗略的 Ini文件 操作
 #### 作者 Icy 
