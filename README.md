@@ -9,7 +9,7 @@ package main
 
 import (
 	"fmt"
-	z "github.com/Icy2010/ZeligIniFile"
+	z "github.com/Icy2010/Ini-Config"
 )
 
 type TContacInfo struct {
