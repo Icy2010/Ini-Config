@@ -8,15 +8,22 @@ import (
 func TestIniConfig(t *testing.T) {
 
 	type TContacInfo struct {
-		Name   string `ini:"name"`
-		Web    string `ini:"web"`
-		EMail  string `ini:"email"`
-		WeChat string `ini:"wechat"`
-		QQ     string `ini:"qq"`
-		Title  string `ini:"title"`
+		Name   string `ini:"name,icy"`
+		Web    string `ini:"web,http://zelig.cn"`
+		EMail  string `ini:"email,icy2010@hotmail.com"`
+		WeChat string `ini:"wechat,IcySoft"`
+		QQ     string `ini:"qq,2261206"`
+		Title  string `ini:"title,test"`
 	}
 
 	ini := NewIniConfig()
+	_ = ini.AddSection(`test`).SetStruct(TContacInfo{})
+	fmt.Println(ini.GetSection("test"))
+
+	if ini.HasSection(`test`) {
+		fmt.Println(`含有 test`)
+	}
+
 	ini.ReadFromString(`[default]
 string_value = 哈哈 ; 测试1
 integer_value = 1 ;测试2 

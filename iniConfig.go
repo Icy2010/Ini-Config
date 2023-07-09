@@ -104,8 +104,18 @@ func (this *TIniSection) setValue(Ident string, value interface{}) {
 		Comment: "",
 	}
 	switch reflect.ValueOf(value).Kind() {
-	case reflect.Int64, reflect.Int, reflect.Bool:
+	case reflect.Bool:
+		data.Value = func() string {
+			if value.(bool) {
+				return `1`
+			} else {
+				return `0`
+			}
+		}()
+	case reflect.Int64:
 		data.Value = strconv.FormatInt(value.(int64), 10)
+	case reflect.Uint64:
+		data.Value = strconv.FormatUint(value.(uint64), 10)
 	case reflect.Float64:
 		data.Value = strconv.FormatFloat(value.(float64), 'f', 2, 64)
 	case reflect.String:
@@ -156,6 +166,54 @@ func (this *TIniSection) SetComment(Ident, Comment string) {
 	}
 }
 
+type iniKeyValue struct {
+	key   string
+	value string
+}
+
+func getIniKeyValue(v string) iniKeyValue {
+	item := strings.Split(v, `,`)
+	if len(item) > 1 {
+		return iniKeyValue{
+			key:   item[0],
+			value: item[1],
+		}
+	}
+
+	return iniKeyValue{
+		key:   v,
+		value: "",
+	}
+}
+
+func getFinalValue[T any](Default string, fv T) string {
+	if Default != "" {
+		return Default
+	} else {
+		var pType any = &fv
+		switch reflect.TypeOf(pType).Kind() {
+		case reflect.Int64:
+			return strconv.FormatInt(pType.(int64), 10)
+		case reflect.Float64:
+			return strconv.FormatFloat(pType.(float64), 'f', 2, 64)
+		case reflect.Uint64:
+			return strconv.FormatUint(pType.(uint64), 10)
+		case reflect.String:
+			return pType.(string)
+		case reflect.Bool:
+			return func() string {
+				if pType.(bool) {
+					return `1`
+				}
+				return `0`
+			}()
+
+		}
+
+		return ``
+	}
+}
+
 func (this *TIniSection) SetStruct(value interface{}) error {
 	val := reflect.ValueOf(value)
 	if val.Kind() == reflect.Struct {
@@ -168,28 +226,22 @@ func (this *TIniSection) SetStruct(value interface{}) error {
 		for i := 0; i < size; i++ {
 			v := val.Field(i)
 
-			name := t.Field(i).Tag.Get(`ini`)
-			if name == "" {
-				name = t.Field(i).Name
+			kv := getIniKeyValue(t.Field(i).Tag.Get(`ini`))
+			if kv.key == "" {
+				kv.key = t.Field(i).Name
 			}
 
 			switch v.Kind() {
 			case reflect.Bool:
-				this.setValue(name, func() int64 {
-					if v.Bool() {
-						return 1
-					} else {
-						return 0
-					}
-				}())
+				this.setValue(kv.key, getFinalValue[bool](kv.value, v.Bool()))
 			case reflect.String:
-				this.setValue(name, v.String())
+				this.setValue(kv.key, getFinalValue[string](kv.value, v.String()))
 			case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64:
-				this.setValue(name, v.Int())
+				this.setValue(kv.key, getFinalValue[int64](kv.value, v.Int()))
 			case reflect.Uint, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-				this.setValue(name, int64(v.Uint()))
+				this.setValue(kv.key, getFinalValue[uint64](kv.value, v.Uint()))
 			case reflect.Float32, reflect.Float64:
-				this.setValue(name, v.Float())
+				this.setValue(kv.key, getFinalValue[float64](kv.value, v.Float()))
 			default:
 				continue
 			}
@@ -454,4 +506,17 @@ func (this *TIniConfig) AddSection(name string) *TIniSection {
 	sec := &this.Sections[len(this.Sections)-1]
 	sec.Name = name
 	return sec
+}
+
+func (this *TIniConfig) HasSection(name string) bool {
+	names := this.SectionNames()
+	if len(names) > 0 {
+		for _, v := range names {
+			if v == name {
+				return true
+			}
+		}
+	}
+
+	return false
 }
