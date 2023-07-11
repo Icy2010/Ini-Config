@@ -21,7 +21,16 @@ func TestIniConfig(t *testing.T) {
 	fmt.Println(ini.GetSection("test"))
 
 	if ini.HasSection(`test`) {
-		fmt.Println(`含有 test`)
+
+		ini.SetStruct(`test`, TContacInfo{
+			Name:   "meow",
+			Web:    "baidu.com",
+			EMail:  "226206@qq.com",
+			WeChat: "IcySoft",
+			QQ:     "2261206",
+			Title:  "tataata",
+		})
+		fmt.Println(ini.GetSection(`test`))
 	}
 
 	ini.ReadFromString(`[default]

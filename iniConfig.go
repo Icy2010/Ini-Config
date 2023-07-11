@@ -187,31 +187,34 @@ func getIniKeyValue(v string) iniKeyValue {
 }
 
 func getFinalValue[T any](Default string, fv T) string {
-	if Default != "" {
-		return Default
-	} else {
-		var pType any = &fv
-		switch reflect.TypeOf(pType).Kind() {
-		case reflect.Int64:
-			return strconv.FormatInt(pType.(int64), 10)
-		case reflect.Float64:
-			return strconv.FormatFloat(pType.(float64), 'f', 2, 64)
-		case reflect.Uint64:
-			return strconv.FormatUint(pType.(uint64), 10)
-		case reflect.String:
-			return pType.(string)
-		case reflect.Bool:
-			return func() string {
-				if pType.(bool) {
-					return `1`
-				}
-				return `0`
-			}()
+	var pType any = fv
+	typ := reflect.TypeOf(pType)
+	res := ``
 
-		}
+	switch typ.Kind() {
+	case reflect.Int64:
+		res = strconv.FormatInt(pType.(int64), 10)
+	case reflect.Float64:
+		res = strconv.FormatFloat(pType.(float64), 'f', 2, 64)
+	case reflect.Uint64:
+		res = strconv.FormatUint(pType.(uint64), 10)
+	case reflect.String:
+		res = pType.(string)
+	case reflect.Bool:
+		res = func() string {
+			if pType.(bool) {
+				return `1`
+			}
+			return `0`
+		}()
 
-		return ``
 	}
+
+	if res == "" && Default != "" {
+		return Default
+	}
+
+	return res
 }
 
 func (this *TIniSection) SetStruct(value interface{}) error {
